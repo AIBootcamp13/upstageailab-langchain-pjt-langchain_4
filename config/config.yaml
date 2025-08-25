@@ -1,0 +1,16 @@
+
+data:
+  file_path: "./crawling/data/geeknews_100.csv"
+
+split:
+  chunk_type: recursive
+  chunk_size: 1000
+  chunk_overlap: 50
+
+embedding:
+  backend: openai
+  model: embedding-query
+  chunk_size: 100
+
+vectordb:
+  backend: faiss
