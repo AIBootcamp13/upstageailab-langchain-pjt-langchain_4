@@ -1,0 +1,5 @@
+qdrant-client
+pandas
+numpy
+faiss-cpu
+langchain-community
