@@ -14,3 +14,6 @@ embedding:
 
 vectordb:
   backend: faiss
+
+llm:
+  model: solar-pro2
