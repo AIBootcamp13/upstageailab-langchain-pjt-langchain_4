@@ -5,6 +5,7 @@ def load_documents(file_path: str):
         file_path,
         usecols=['title', 'content', 'date'] # 사용할 컬럼 명시적으로 지정
     )
+    df = df.dropna().reset_index(drop=True)
     loader = DataFrameLoader(
         df,
         page_content_column='content'

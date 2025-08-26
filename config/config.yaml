@@ -1,6 +1,6 @@
 
 data:
-  file_path: "./crawling/data/geeknews_100.csv"
+  file_path: "./crawling/data/geeknews.csv"
 
 split:
   chunk_type: recursive
