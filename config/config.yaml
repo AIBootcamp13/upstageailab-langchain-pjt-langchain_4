@@ -13,7 +13,12 @@ embedding:
   chunk_size: 100
 
 vectordb:
-  backend: faiss
+  #backend: faiss
+  backend: qdrant
+  client:
+    host: localhost
+    port: 50333
+  collection_name: faiss_automated_import
 
 llm:
   model: solar-pro2

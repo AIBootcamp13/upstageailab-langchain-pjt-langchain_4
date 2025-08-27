@@ -10,3 +10,4 @@ python-dotenv
 langsmith
 langchain
 langchain-openai
+langchain_qdrant
