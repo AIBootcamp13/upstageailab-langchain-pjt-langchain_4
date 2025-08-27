@@ -4,3 +4,5 @@ outputs
 .env
 /vectorDB/*
 /venv
+/qdrant_storage
+.pyc

@@ -1,0 +1,22 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: my_qdrant_db
+    ports:
+      - "50333:6333"
+      - "50334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    cpus: 4
+    mem_limit: 8g
+
+  uploader:
+    build: ./uploader
+    container_name: my_faiss_uploader
+ 
+    command: /bin/sh -c "sleep 15 && python upload_script.py"
+    volumes:
+      - ./vectorDB:/data/vectorDB:ro
+
+volumes:
+  qdrant_data:
