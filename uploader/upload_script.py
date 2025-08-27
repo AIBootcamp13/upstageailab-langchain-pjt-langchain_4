@@ -29,8 +29,11 @@ for pos, doc_id in vs.index_to_docstore_id.items():
     meta = dict(doc.metadata) if doc.metadata else {}
     record = {
         "title": meta.get("title"),
+        "ellipsis": meta.get("ellipsis"),
         "content": doc.page_content,
         "date": meta.get("date"),  # "YYYY-MM-DD HH:MM" 기대
+        "href": meta.get("href"),
+        "source_link": meta.get("source_link"),
         "embedding": emb,
         # 필요시 기타 메타 필드 유지
         **{k: v for k, v in meta.items() if k not in {"title", "date"}}

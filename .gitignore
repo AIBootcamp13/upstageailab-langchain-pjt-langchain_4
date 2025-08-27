@@ -5,4 +5,4 @@ outputs
 /vectorDB/*
 /venv
 /qdrant_storage
-.pyc
+*.pyc
