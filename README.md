@@ -69,12 +69,11 @@ RAG & Langchain 기술을 사용하여 GitNews에서 사용하는 챗봇을 생�
 
 <br>
 
-## Architecture
-- #### VertorDB
-![이미지 설명]()
+## System Architecture
+![System Architecture](./images/system_architecture.png)
 
-- #### System
-![이미지 설명]()
+## VerterDB Architecture
+![VerterDB Architecture](./images/verterDB_architecture.png)
 
 <br>
 
