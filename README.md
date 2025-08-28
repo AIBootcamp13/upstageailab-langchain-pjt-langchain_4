@@ -28,9 +28,10 @@ RAG & Langchain 기술을 사용하여 GitNews에서 사용하는 챗봇을 생�
 <br>
 
 ## 개발 환경
-- **주 언어** : _python_
-- **DB 구축** : _qdrant_
-- **컨테이너 및 실행 환경** : _docker (docker compose 기반 환경 세팅)_
+- **주 언어** : python
+- **DB 구축** : qdrant
+- **컨테이너 및 실행 환경** : docker (docker compose 기반 환경 세팅)
+- **UI** : streamlit
 
 <br>
 
@@ -41,23 +42,6 @@ RAG & Langchain 기술을 사용하여 GitNews에서 사용하는 챗봇을 생�
 
 <br>
 
-## 프로젝트 구조
-```
-├── code
-│   ├── jupyter_notebooks
-│   │   └── model_train.ipynb
-│   └── train.py
-├── docs
-│   ├── pdf
-│   │   └── (Template) [패스트캠퍼스] Upstage AI Lab 1기_그룹 스터디 .pptx
-│   └── paper
-└── input
-    └── data
-        ├── eval
-        └── train
-```
-
-<br>
 
 ## 주요 Tasks
 ### 1. Tags 기반 Timeline & 요약 briefing
@@ -77,22 +61,16 @@ RAG & Langchain 기술을 사용하여 GitNews에서 사용하는 챗봇을 생�
 
 <br>
 
-## 🚨​ 트러블 슈팅
-### 1. OOO 에러 발견
 
-#### 설명
-- _프로젝트 진행 중 발생한 트러블에 대해 작성해주세요_
-
-#### 해결
-- _프로젝트 진행 중 발생한 트러블 해결방법 대해 작성해주세요_
-
-<br>
-
-## 📌 프로젝트 회고
-### 박패캠
+## 강사님 피드백 및 프로젝트 진행 과정
+### 1차 피드백 (2025.08.25)
 - _프로젝트 회고를 작성해주세요_
 
+### 2차 피드백 (2025.08.27)
+
+
+
 <br>
 
-## 📰​ 참고자료
-- _참고자료를 첨부해주세요_
+## 참고자료
+- [WikiDocs : 한 권으로 끝내는 랭체인 노트](https://wikidocs.net/251190)
