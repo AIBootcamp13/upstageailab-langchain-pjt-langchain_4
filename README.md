@@ -1,11 +1,11 @@
-# GitNews 챗봇 만들기
+# GitNews 챗봇 생성 프로젝트
 
-RAG & Langchain 기술을 사용하여 GitNews에서 사용하는 챗봇을 생성하는 프로젝트입니다.
-테그 기반 타임라인과 요약을 제공하고, 관련된 QA를 진행할 수 있습니다.
+RAG & Langchain 기술을 사용하여 GitNews에서 사용하는 챗봇을 생성하는 프로젝트입니다.<br>
+테그 기반 타임라인과 요약을 제공하고, 관련된 QA를 진행할 수 있습니다.<br>
 일반적인 QA의 경우 키워드를 기반으로 대화 및 질의가 진행됩니다.
 
-- 프로젝트 기한 : 2025.08.25 ~ 08.29
-- 프로젝트 주제 : 테그 및 키워드 기반 QA, 타임라인 제공
+- **프로젝트 기한** : 2025.08.25 ~ 08.29
+- **프로젝트 주제** : 테그 및 키워드 기반 QA, 타임라인 제공
 
 <br>
 
@@ -14,19 +14,34 @@ RAG & Langchain 기술을 사용하여 GitNews에서 사용하는 챗봇을 생�
 | ![이승민](https://avatars.githubusercontent.com/u/33342021?v=4) | ![이재용](https://avatars.githubusercontent.com/u/208237828?v=4) | ![이승현](https://avatars.githubusercontent.com/u/126837633?v=4&size=64) |
 | :--------------------------------------------------------------: | :--------------------------------------------------------------: | :--------------------------------------------------------------: |
 |            [이승민](https://github.com/UpstageAILab)             |            [이재용](https://github.com/UpstageAILab)             |            [이승현](https://github.com/UpstageAILab)             |
-|                            **팀장**<br>RAG 환경 구축 및 프롬프트                             |                            **팀원**<br>streamlit UI 구축                             |                            **팀원**<br>프롬프트, 문서 작성                             |
+|                            **팀장**<br>VectorDB 및 Retreiver 구축<br>프로젝트 전반 관리                             |                            **팀원**<br>streamlit UI 구축                             |                            **팀원**<br>프롬프트, 문서 작성                             |
 
 
 <br>
 
-## 🔨 개발 환경 및 기술 스택
-- 주 언어 : _ex) python_
-- 버전 및 이슈관리 : _ex) github_
-- 협업 툴 : _ex) github, notion_
+## 문제 정의 및 기대 효과
+- **문제 정의** : 기존 GitNews는 검색 기능이 없어, 사용자가 원하는 정보나 관련 문서를 빠르게 찾기 어렵습니다.  
+- **해결 방안** : RAG 기반 검색 및 타임라인 기능을 제공하여, 입력된 키워드와 연관된 정보를 구조화된 형태로 탐색할 수 있도록 합니다.  
+- **기대 효과** : 사용자는 필요한 정보를 빠르게 탐색하고, 관련 지식을 체계적으로 정리·파악할 수 있어 생산성과 효율성이 향상됩니다.  
+
 
 <br>
 
-## 📁 프로젝트 구조
+## 개발 환경
+- **주 언어** : _python_
+- **DB 구축** : _qdrant_
+- **컨테이너 및 실행 환경** : _docker (docker compose 기반 환경 세팅)_
+
+<br>
+
+## 협업 툴
+- **버전 관리** : GitHub
+- **프로젝트 이슈 관리** : GitHub KanbanBoard
+- **소통** : Slack
+
+<br>
+
+## 프로젝트 구조
 ```
 ├── code
 │   ├── jupyter_notebooks
@@ -44,19 +59,22 @@ RAG & Langchain 기술을 사용하여 GitNews에서 사용하는 챗봇을 생�
 
 <br>
 
-## 💻​ 구현 기능
-### 기능1
+## 주요 Tasks
+### 1. Tags 기반 Timeline & 요약 briefing
 - _작품에 대한 주요 기능을 작성해주세요_
-### 기능2
+### 2. Tags 기반 QA
 - _작품에 대한 주요 기능을 작성해주세요_
-### 기능3
+### 3. 키워드 기반 General QA
 - _작품에 대한 주요 기능을 작성해주세요_
 
 <br>
 
-## 🛠️ 작품 아키텍처(필수X)
-- #### _아래 이미지는 예시입니다_
-![이미지 설명](https://miro.medium.com/v2/resize:fit:4800/format:webp/1*ub_u88a4MB5Uj-9Eb60VNA.jpeg)
+## Architecture
+- #### VertorDB
+![이미지 설명]()
+
+- #### System
+![이미지 설명]()
 
 <br>
 
