@@ -1,14 +1,15 @@
-
 import os
 import hydra
 from omegaconf import DictConfig
 from dotenv import load_dotenv
 from retriever import load_documents, split_documents, build_or_load_vector_db, create_retriever
 from embedding import embedding_documents
+import numpy as np
+from datetime import datetime, timedelta
 
 from langchain_upstage import ChatUpstage
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableLambda
@@ -16,6 +17,7 @@ from qdrant_client import QdrantClient
 from typing import List, Dict, Any
 from tool.time_line import TimeLine
 from qdrant_client.http.models import Distance, VectorParams
+from model import make_router
 load_dotenv()
 
 @hydra.main(config_path="config", config_name="config", version_base=None)
@@ -43,45 +45,95 @@ def main(cfg: DictConfig):
     retriever = create_retriever(backend=cfg.vectordb.backend, model=embedding_model, filepath=filepath, client=qdrant_client,collection_name=cfg.vectordb.collection_name)
     #LLM 모델 로드
     llm = ChatUpstage(model=cfg.llm.model, api_key=api_key, temperature=0)
-    prompt = PromptTemplate.from_template(
-        """You are an assistant for question-answering tasks. 
-    Use the following pieces of retrieved context to answer the question. 
-    If you don't know the answer, just say that you don't know. 
-    Answer in Korean.
+    # ─────────────────────────────────────────────
+# (중요) 타임라인 경로에서 질의 임베딩이 필요합니다.
+# retriever에 embedder가 없다면, 기존 embedding_model을 붙여 주세요.
+# ─────────────────────────────────────────────
+try:
+    _ = retriever.embeddings  # 존재 확인
+except AttributeError:
+    if 'embedding_model' in locals():
+        setattr(retriever, "embeddings", embedding_model)  # 간단히 주입
+    else:
+        # 임베딩이 전혀 없다면 타임라인 기능은 폴백으로만 동작합니다.
+        pass
 
-    #Question: 
-    {question} 
-    #Context: 
-    {context} 
+# ─────────────────────────────────────────────
+# Qdrant 클라이언트가 있으면 넘기고, 없으면 None으로 둡니다.
+# ─────────────────────────────────────────────
+qdrant = qdrant_client if 'qdrant_client' in locals() else None
+collection = getattr(getattr(cfg, "vectordb", None), "collection_name", None)
 
-    #Answer:"""
+# ─────────────────────────────────────────────
+# 라우터 생성 (메인은 얇게, 로직은 model/ 쪽으로)
+# ─────────────────────────────────────────────
+router = make_router(
+    retriever=retriever,
+    llm=llm,
+    cfg=cfg,
+    qdrant_client=qdrant,
+    collection_name=collection,
+    structured_generic=True,  # 일반 QA는 목차/내용/결론 구조 사용
+)
+
+# ─────────────────────────────────────────────
+# 사용 예시 ①: 일반 채팅 질의
+# ─────────────────────────────────────────────
+def answer_chat(query: str):
+    """
+    일반 입력을 라우터에 넘기고, 반환 타입에 따라 출력 채널 분배.
+    UI가 있다면 아래 print 대신 패널/채팅창으로 분기 렌더링하세요.
+    """
+    result = router(query)  # timeline_button=False 기본
+    rtype = result.get("type")
+
+    if rtype == "timeline":
+        # 이 경로는 보통 버튼으로만 들어옵니다. (여기선 방어코드)
+        print("=== [타임라인 패널] ===")
+        print(result["timeline_text"])
+        print("\n=== [채팅창 브리핑(3줄)] ===")
+        print(result["briefing_text"])
+    else:
+        # generic / trend / evolution 공통
+        print(result.get("text", ""))
+
+# ─────────────────────────────────────────────
+# 사용 예시 ②: 타임라인 버튼 클릭 시
+# ─────────────────────────────────────────────
+def answer_timeline(query: str, limit: int = 6, tags=None):
+    """
+    UI에서 타임라인 버튼을 눌렀을 때 호출.
+    반환 객체에 패널용/채팅창용이 분리되어 들어옵니다.
+    """
+    result = router(
+        query,
+        timeline_button=True,      # ★ 버튼 신호로만 타임라인 분기
+        timeline_limit=limit,
+        tags=tags or [],
     )
+    # === 여기서 UI에 분리 렌더 ===
+    timeline_panel_text = result["timeline_text"]  # 타임라인 노출 칸
+    briefing_3lines     = result["briefing_text"]  # 채팅창
 
-    def format_docs(docs):
-        print("=== 검색된 Context ===")
-        formatted_docs = []
-        for i, doc in enumerate(docs):
-            content = doc.page_content if hasattr(doc, 'page_content') else str(doc)
-            print(f"[{i}] {doc}\n---")
-            formatted_docs.append(content)
-        return "\n".join(formatted_docs)
+    # 데모 출력
+    print("=== [타임라인 패널] ===")
+    print(timeline_panel_text)
+    print("\n=== [채팅창 브리핑(3줄)] ===")
+    print(briefing_3lines)
 
-    chain = (
-    {"context": retriever | RunnableLambda(format_docs), "question": RunnablePassthrough()}
-    | prompt
-    | llm
-    | StrOutputParser()
-    )
-
-
-    #체인 생성
-    while True:
-        query = input("질문을 입력하세요: ")
-        if query == "종료":
-            break
-                
-        response = chain.invoke(query)
-        print(response)
-
+# ─────────────────────────────────────────────
+# (옵션) 간단 REPL 데모
+# ─────────────────────────────────────────────
 if __name__ == "__main__":
-    main()
+    print("입력 예시: 일반 질문 그대로 /timeline 주제 [개수]  형태")
+    while True:
+        q = input("> ").strip()
+        if q in ("종료", "exit", "quit"):
+            break
+        if q.startswith("/timeline"):
+            parts = q.split(maxsplit=2)
+            lim = int(parts[2]) if len(parts) >= 3 and parts[2].isdigit() else 6
+            topic = parts[1] if len(parts) >= 2 else ""
+            answer_timeline(topic or "타임라인", limit=lim, tags=[topic] if topic else [])
+        else:
+            answer_chat(q)
