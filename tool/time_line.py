@@ -6,6 +6,7 @@ import math
 from qdrant_client.models import Filter, FieldCondition, Range
 from qdrant_client import QdrantClient
 from openai import OpenAI
+from langchain_upstage import ChatUpstage
 from dotenv import load_dotenv
 import os
 
@@ -68,7 +69,7 @@ class TimeLine:
                 })
 
         # 반환 순서: 버킷 순(시간순). 필요하면 score로 정렬 변경 가능
-        results.sort(key=lambda x: x["bucket_index"])
+        results.sort(key=lambda x: x["bucket_index"],reverse=True)
         return results
 
 
@@ -77,7 +78,7 @@ if __name__ == "__main__":
     api_key=os.environ["UPSTAGE_API_KEY"]
 
     from openai import OpenAI
-    
+    llm = ChatUpstage(model='solar-pro2', api_key=api_key, temperature=0)
     embeding_model = OpenAI(
         api_key=api_key,
         base_url="https://api.upstage.ai/v1"
@@ -98,7 +99,45 @@ if __name__ == "__main__":
     timeline = TimeLine(qdrant_client, COLLECTION_NAME)
     
     start_dt = datetime(2025, 1, 1, 0, 0)
-    end_dt   = datetime(2025, 1, 27, 23, 59)
+    end_dt   = datetime(2025, 8, 27, 23, 59)
     top10 = timeline.search_top_per_bucket(query_vector, start_dt, end_dt, n_buckets=10)
+    content = '\n'.join([f'[{i} 자료]{r["payload"]["content"]}' for i,r in enumerate(top10)])
+
+    system_add_prompt = "\n".join([f'[{i}] 타임라인 정리' for i in range(len(top10))])
     for r in top10:
-        print(r["bucket_index"], r["id"], r["score"], r["payload"])
+        # print(r["bucket_index"], r["id"], r["score"], r["payload"])
+        print(r)
+
+
+
+    
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://api.upstage.ai/v1"
+    )
+    
+    stream = client.chat.completions.create(
+        model="solar-pro2",
+        messages=[
+            {
+                "system": f"""
+너는 타임라인을 정리해여 설명 하는 챗봇 입니다.
+[1]~[..] 번호로 타임라인을 정리해여 설명 하세요.
+
+{system_add_prompt}
+    """,
+                "role": "user",
+                "content": f"""
+{content}
+{system_add_prompt}
+    """
+            }
+        ],
+        stream=True,
+    )
+    text = ""
+    for chunk in stream:
+        if chunk.choices[0].delta.content is not None:
+            text += chunk.choices[0].delta.content
+    print(text)
+    
