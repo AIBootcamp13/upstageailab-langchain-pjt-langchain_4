@@ -42,6 +42,11 @@ RAG & Langchain 기술을 사용하여 GitNews에서 사용하는 챗봇을 생�
 
 <br>
 
+## UI
+![UI Images]()
+
+<br>
+
 
 ## 주요 Tasks
 ### 1. Tags 기반 Timeline & 요약 briefing
