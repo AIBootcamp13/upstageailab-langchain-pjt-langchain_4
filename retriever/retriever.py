@@ -33,7 +33,7 @@ def create_retriever(backend: str, model: str, filepath: str,**kwargs: Any):
         )
         return qdrant_vector_store.as_retriever(
             search_type="mmr", 
-            search_kwargs={'k': 5}
+            search_kwargs={'k': 10}
         )
     else:
         raise ValueError(f"Invalid backend: {backend}")

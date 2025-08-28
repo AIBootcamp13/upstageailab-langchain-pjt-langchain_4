@@ -7,6 +7,34 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from omegaconf import OmegaConf
+from retriever import create_retriever
+from embedding import embedding_documents
+from qdrant_client import QdrantClient
+from langchain_upstage import ChatUpstage
+from integration_main import Main
+
+load_dotenv()
+cfg = OmegaConf.load("config/config.yaml")
+filepath = f"./vectorDB/{cfg.split.chunk_type}-{cfg.split.chunk_size}-{cfg.split.chunk_overlap}_{cfg.embedding.backend}-{cfg.embedding.model}-{cfg.embedding.chunk_size}_{cfg.vectordb.backend}"
+api_key = os.getenv("UPSTAGE_API_KEY")
+#문서 임베딩 모델 로드
+embedding_model = embedding_documents(cfg.embedding.backend, cfg.embedding.model, cfg.embedding.chunk_size, api_key)
+#벡터 데이터베이스 생성
+qdrant_client = QdrantClient(
+    host=cfg.vectordb.client.host, 
+    port=cfg.vectordb.client.port,
+    timeout=100)
+
+#벡터 데이터베이스 로드 및 검색 설정
+retriever = create_retriever(backend=cfg.vectordb.backend, model=embedding_model, filepath=filepath, client=qdrant_client,collection_name=cfg.vectordb.collection_name)
+#LLM 모델 로드
+llm = ChatUpstage(model=cfg.llm.model, api_key=api_key, temperature=0)
+main = Main(llm,embedding_model,qdrant_client,retriever)
+print(main.run(msg="android ai 에 대해 타임라인 작성해줘")) # -> (response,timeline_response) or (response)
+
+
+
 
 # ========== Page Config ==========
 st.set_page_config(page_title="GeekNews Trend Chat", layout="wide")

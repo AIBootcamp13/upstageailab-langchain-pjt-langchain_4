@@ -71,7 +71,7 @@ def build_timeline_outputs(
 
     if qdrant_client and collection_name:
         try:
-            from tool.time_line import TimeLine
+            from tools.time_line import TimeLine
             import numpy as np
             qvec = np.array(retriever.embeddings.embed_query(question), dtype=np.float32)
             tl = TimeLine(qdrant_client, collection_name)

@@ -9,6 +9,7 @@ from openai import OpenAI
 from langchain_upstage import ChatUpstage
 from dotenv import load_dotenv
 import os
+from langchain_core.messages import SystemMessage, HumanMessage
 
 class TimeLine:
     def __init__(self, qdrant_client, COLLECTION_NAME: str="faiss_automated_import",QDRANT_HOST: str="localhost",QDRANT_PORT: int=50333):
@@ -71,6 +72,29 @@ class TimeLine:
         # 반환 순서: 버킷 순(시간순). 필요하면 score로 정렬 변경 가능
         results.sort(key=lambda x: x["bucket_index"],reverse=True)
         return results
+    
+    def timeline_prompt(self,timeline_response):
+        content = '\n'.join([f'[{i} 자료]{r["payload"]["content"]}' for i,r in enumerate(timeline_response)])
+        system_add_prompt = "\n".join([f'[{i}] 타임라인 정리' for i in range(len(timeline_response))])
+        system_prompt = f"""
+너는 타임라인을 정리해여 설명 하는 챗봇 입니다.
+[1]~[..] 번호로 타임라인을 정리해여 설명 하세요.
+
+{content}
+    """
+        user_prompt = f"""
+{content}
+{system_add_prompt}
+    """
+        messages = [
+            SystemMessage(
+                content=f"""{system_prompt}"""
+            ),
+            HumanMessage(
+                content=f"""{user_prompt}"""
+            )
+        ]
+        return messages
 
 
 if __name__ == "__main__":
