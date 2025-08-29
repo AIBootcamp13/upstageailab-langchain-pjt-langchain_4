@@ -71,14 +71,12 @@ class Main:
             if timeline_vaild:
                 query_vector = self.to_embedding(tags_keywords)
                 timeline_response = self.timeline.search_top_per_bucket(query_vector,start_dt, end_dt, n_buckets=n_buckets)
-
-
                 messages = self.timeline.timeline_prompt(timeline_response)
                 response = self.llm.invoke(messages)
                 response = response.content
                 return (response,timeline_response)
             else:
-                result = self.qa_retriever.invoke({"query": tags_keywords})
+                result = self.qa_retriever.invoke({"query": f"""tags:{tags_keywords} \n 질문:{msg}""",})
                 return result['result']
                 
 
