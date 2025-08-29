@@ -31,9 +31,10 @@ retriever = create_retriever(backend=cfg.vectordb.backend, model=embedding_model
 #LLM 모델 로드
 llm = ChatUpstage(model=cfg.llm.model, api_key=api_key, temperature=0)
 main = Main(llm,embedding_model,qdrant_client,retriever)
-print(main.run(msg="android ai 에 대해 타임라인 작성해줘")) # -> (response,timeline_response) or (response)
+print(main.run(msg="android ai 에 대해 타임라인 작성해줘",tags=["ai"])) # -> (response,timeline_response) or (response)
 
-
+# -> tuple -> response[0] : chat_text, response[1] : timeline_datas
+# -> str -> response : chat_text
 
 
 # ========== Page Config ==========
