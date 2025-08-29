@@ -14,6 +14,7 @@ from qdrant_client import QdrantClient
 from langchain_upstage import ChatUpstage
 from integration_main import Main
 
+
 load_dotenv()
 cfg = OmegaConf.load("config/config.yaml")
 filepath = f"./vectorDB/{cfg.split.chunk_type}-{cfg.split.chunk_size}-{cfg.split.chunk_overlap}_{cfg.embedding.backend}-{cfg.embedding.model}-{cfg.embedding.chunk_size}_{cfg.vectordb.backend}"

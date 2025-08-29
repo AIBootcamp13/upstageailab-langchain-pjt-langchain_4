@@ -109,7 +109,7 @@ def main(cfg: DictConfig):
     #LLM 모델 로드
     llm = ChatUpstage(model=cfg.llm.model, api_key=api_key, temperature=0)
     main = Main(llm,embedding_model,qdrant_client,retriever)
-    print(main.run(msg="android ai 에 대해 알려줘"))
+    print(main.run(msg=""))
 
 if __name__ == "__main__":
     main()
