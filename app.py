@@ -66,6 +66,9 @@ if "history" not in st.session_state:
     st.session_state.history: List[Dict] = []
 if "timeline" not in st.session_state:
     st.session_state.timeline: List[Dict] = []
+if "main_instance" not in st.session_state:
+    # 백엔드 인스턴스를 세션에 저장하여 중복 초기화 방지
+    st.session_state.main_instance = main
 
 # ========== API Key & Client Setup ==========
 load_dotenv()
@@ -91,16 +94,59 @@ def fetch_timeline(tags: List[str], keyword: str, start: date, end: date) -> Lis
     TODO: 실제 백엔드 API와 연동하여 데이터를 가져오도록 수정해야 합니다.
     """
     # 백엔드 API 호출 시 발생할 수 있는 지연을 시뮬레이션합니다.
-    time.sleep(2)
-
-    base = [{
-        "date": str(end - timedelta(days=i*2)),
-        "title": f"[{tags[0] if tags else 'trend'}] {keyword or 'hot topic'} 업데이트 {i}",
-        "summary": "핵심 포인트 한 줄 요약. (여기는 백엔드 요약 결과를 표시합니다.)",
-        "url": "https://news.hada.io/",
-        "tags": tags[:3] or ["ai"]
-    } for i in range(1,5)]
-    return base
+    try:
+        # 세션에 저장된 main 인스턴스 사용
+        main_instance = st.session_state.main_instance
+        
+        # Main.run()을 사용하여 타임라인 생성
+        combined_query = f"타임라인 생성"
+        if keyword:
+            combined_query += f" (키워드: {keyword})"
+        
+        # datetime import 추가
+        from datetime import datetime
+        
+        response = main_instance.run(
+            msg=combined_query, 
+            tags=tags,
+            start_dt=datetime.combine(start, datetime.min.time()),
+            end_dt=datetime.combine(end, datetime.max.time()),
+            n_buckets=10
+        )
+        
+        if isinstance(response, tuple):
+            # 타임라인 데이터가 있는 경우
+            _, timeline_data = response
+            # 타임라인 데이터를 UI에 맞는 형식으로 변환
+            formatted_timeline = []
+            for item in timeline_data:
+                payload = item.get("payload", {})
+                # ellipsis가 있으면 사용, 없으면 content에서 첫 100자 추출
+                content = payload.get("ellipsis", payload.get("content", ""))
+                summary = content[:100] + "..." if len(content) > 100 else content
+                
+                formatted_timeline.append({
+                    "date": payload.get("date_str", payload.get("date", "날짜 없음")),
+                    "title": payload.get("title", "제목 없음"),
+                    "summary": summary,
+                    "url": payload.get("href", payload.get("source_link", "#")),
+                    "tags": tags[:3] or ["ai"]
+                })
+            return formatted_timeline
+        else:
+            # 타임라인 데이터가 없는 경우
+            return []
+            
+    except Exception as e:
+        st.error(f"타임라인 생성 중 오류가 발생했습니다: {e}")
+        # 오류 발생 시 기본 데이터 반환
+        return [{
+            "date": str(end - timedelta(days=i*2)),
+            "title": f"[{tags[0] if tags else 'trend'}] {keyword or 'hot topic'} 업데이트 {i}",
+            "summary": "타임라인 생성 중 오류가 발생했습니다. 다시 시도해주세요.",
+            "url": "#",
+            "tags": tags[:3] or ["ai"]
+        } for i in range(1,3)]
 
 # ========== LangChain을 사용하여 Upstage API를 호출하고 챗봇 응답을 생성 ==========
 def chat_api(message: str, tags: List[str], keyword: str) -> dict:   
@@ -130,13 +176,121 @@ Based on this context, please provide a concise and clear answer to the user's q
             "keyword": keyword or 'Not specified',
             "question": message
         })
+        main_instance = st.session_state.main_instance
+            
+            # integration_main.py의 Main 클래스 사용
+            # 메시지와 태그를 결합하여 질문 구성
+        combined_query = f"{message}"
+        if keyword:
+            combined_query += f" (키워드: {keyword})"
+            
+        # Main.run() 호출하여 실제 LLM 응답 생성
+        response = main_instance.run(msg=combined_query, tags=tags)
         # UI와 호환되는 딕셔너리 형태로 결과를 반환합니다.
+        
         return {"answer": answer, "citations": []}
+    
+        
 
     # API 호출 중 에러가 발생하면 Streamlit 화면에 에러 메시지를 표시합니다.
     except Exception as e:
         st.error(f"API 호출 중 오류가 발생했습니다: {e}")
         return {"answer": "죄송합니다, 답변을 생성하는 동안 오류가 발생했습니다.", "citations": []}
+    # 1. 질문 타입 분류
+    # def is_general_conversation(msg: str) -> bool:
+    #     """일반 대화인지 판단하는 함수"""
+    #     general_patterns = [
+    #         "안녕", "안녕하세요", "안녕하셨나요", "반갑", "고마워", "감사", "죄송",
+    #         "날씨", "기분", "커피", "음식", "영화", "음악", "취미", "운동",
+    #         "도움", "뭐해", "어떻게", "무엇", "누구", "언제", "어디", "왜",
+    #         "좋아", "싫어", "재미", "힘들", "쉬워", "어려워", "맞아", "틀려",
+    #         "그래", "아니", "맞아", "틀려", "알겠", "모르", "궁금", "궁금해"
+    #     ]
+        
+    #     msg_lower = msg.lower()
+    #     return any(pattern in msg_lower for pattern in general_patterns)
+    
+    # def is_search_query(msg: str) -> bool:
+    #     """검색이 필요한 질문인지 판단하는 함수"""
+    #     search_patterns = [
+    #         "트렌드", "동향", "최신", "최근", "현재", "발전", "변화", "업데이트",
+    #         "기술", "AI", "머신러닝", "딥러닝", "LLM", "RAG", "LangChain",
+    #         "뉴스", "기사", "정보", "데이터", "분석", "연구", "논문", "보고서",
+    #         "시장", "산업", "회사", "제품", "서비스", "플랫폼", "도구", "라이브러리",
+    #         "타임라인", "일정", "계획", "로드맵", "미래", "전망", "예측"
+    #     ]
+        
+    #     msg_lower = msg.lower()
+    #     return any(pattern in msg_lower for pattern in search_patterns)
+    
+    # 2. 질문 타입에 따른 처리 분기
+#     if is_general_conversation(message):
+#         # 일반 대화: 직접 LLM에 질문
+#         try:
+#             prompt_template = ChatPromptTemplate.from_messages([
+#                 ("system", """당신은 친근하고 도움이 되는 AI 어시스턴트입니다. 
+# 사용자와 자연스럽게 대화하고, 필요에 따라 도움을 제공하세요.
+# 답변은 한국어로 해주세요."""),
+#                 ("user", "{question}")
+#             ])
+            
+#             chain = prompt_template | llm | StrOutputParser()
+#             answer = chain.invoke({"question": message})
+#             return {"answer": answer, "citations": []}
+            
+#         except Exception as e:
+#             st.error(f"일반 대화 처리 중 오류가 발생했습니다: {e}")
+#             return {"answer": "죄송합니다, 대화 처리 중 오류가 발생했습니다.", "citations": []}
+    
+#     elif is_search_query(message):
+#         # 검색이 필요한 질문: 백엔드 RAG 시스템 사용
+#         try:
+#             # 세션에 저장된 main 인스턴스 사용
+#             main_instance = st.session_state.main_instance
+            
+#             # integration_main.py의 Main 클래스 사용
+#             # 메시지와 태그를 결합하여 질문 구성
+#             combined_query = f"{message}"
+#             if keyword:
+#                 combined_query += f" (키워드: {keyword})"
+            
+#             # Main.run() 호출하여 실제 LLM 응답 생성
+#             response = main_instance.run(msg=combined_query, tags=tags)
+            
+#             # 응답 타입에 따라 처리
+#             if isinstance(response, tuple):
+#                 # 타임라인 응답인 경우
+#                 chat_text, timeline_data = response
+#                 return {
+#                     "answer": chat_text, 
+#                     "citations": [],
+#                     "timeline_data": timeline_data
+#                 }
+#             else:
+#                 # 일반 채팅 응답인 경우
+#                 return {"answer": response, "citations": []}
+
+#         except Exception as e:
+#             st.error(f"검색 처리 중 오류가 발생했습니다: {e}")
+#             return {"answer": "죄송합니다, 검색 처리 중 오류가 발생했습니다.", "citations": []}
+    
+#     else:
+#         # 기본값: 일반 대화로 처리
+#         try:
+#             prompt_template = ChatPromptTemplate.from_messages([
+#                 ("system", """당신은 친근하고 도움이 되는 AI 어시스턴트입니다. 
+# 사용자와 자연스럽게 대화하고, 필요에 따라 도움을 제공하세요.
+# 답변은 한국어로 해주세요."""),
+#                 ("user", "{question}")
+#             ])
+            
+#             chain = prompt_template | llm | StrOutputParser()
+#             answer = chain.invoke({"question": message})
+#             return {"answer": answer, "citations": []}
+            
+#         except Exception as e:
+#             st.error(f"대화 처리 중 오류가 발생했습니다: {e}")
+#             return {"answer": "죄송합니다, 대화 처리 중 오류가 발생했습니다.", "citations": []}
 
 
 # 응답의 근거(Citations)를 화면에 렌더링하는 함수입니다.
